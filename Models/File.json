@@ -1,0 +1,21 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:File;1",
+    "@type": "Interface",
+    "displayName": "File",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:StoringResource;1", "dtmi:digitaltwins:cognite:cdf:RelatedResource;1"],
+    "contents": [
+        {
+            "@type": "Property",
+            "name": "IRI",
+            "schema": "string",
+            "writable": true
+        },
+        {
+            "@type": "Property",
+            "name": "mimeType",
+            "schema": "string",
+            "writable": true
+        }
+    ]
+}

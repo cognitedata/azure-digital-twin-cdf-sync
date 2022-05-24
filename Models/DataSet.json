@@ -1,0 +1,7 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:DataSet;1",
+    "@type": "Interface",
+    "displayName": "Data set",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:OrganizingResource;1", "dtmi:digitaltwins:cognite:cdf:RelatedResource;1"]
+}

@@ -1,0 +1,35 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:Resource;1",
+    "@type": "Interface",
+    "displayName": "Resource",
+    "contents": [
+        {
+            "@type": "Property",
+            "name": "id",
+            "schema": "string",
+            "writable": true
+        },
+        {
+            "@type": "Property",
+            "name": "displayName",
+            "schema": "string",
+            "writable": true
+        },
+        {
+            "@type": "Property",
+            "name": "externalId",
+            "schema": "string"
+        },
+        {
+            "@type": "Property",
+            "name": "description",
+            "schema": "string"
+        },
+        {
+            "@type": "Component",
+            "name": "tags",
+            "schema": "dtmi:digitaltwins:cognite:cdf:Tags;1"
+        }
+    ]
+}

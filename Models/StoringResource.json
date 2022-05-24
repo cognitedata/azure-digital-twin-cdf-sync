@@ -1,0 +1,8 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:StoringResource;1",
+    "@type": "Interface",
+    "displayName": "Storing Resource",
+    "description": "Resource types to store data",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:Resource;1"]
+}

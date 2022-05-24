@@ -1,0 +1,7 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:Datapoint;1",
+    "@type": "Interface",
+    "displayName": "Data point",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:StoringResource;1"]
+}

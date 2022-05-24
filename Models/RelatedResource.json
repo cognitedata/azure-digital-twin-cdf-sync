@@ -1,0 +1,6 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:RelatedResource;1",
+    "@type": "Interface",
+    "displayName": "Related Resource"
+}

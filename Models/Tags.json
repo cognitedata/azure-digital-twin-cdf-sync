@@ -1,0 +1,27 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:Tags;1",
+    "@type": "Interface",
+    "displayName": "Tags",
+    "description": "You can use the concept of tags to further identify and categorize your digital twins",
+    "comment": "Not part of the AAS meta model. Makes querying easier. See https://docs.microsoft.com/en-us/azure/digital-twins/how-to-use-tags",
+    "contents": [
+      {
+        "@type": "Property",
+        "name": "values",
+        "description": "A value tag is a key-value pair that is used to give each tag a value, such as 'color': 'blue' or 'color': 'red'. Once a value tag is created, it can also be used as a marker tag by ignoring the tag's value.",
+        "schema": {
+          "@type": "Map",
+          "mapKey": {
+          "name": "tagName",
+          "schema": "string"
+          },
+          "mapValue": {
+            "name": "tagValue",
+            "schema": "string"
+          }
+        },
+        "writable": true
+      }
+    ]
+  }

@@ -1,0 +1,25 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:TimeSeries;1",
+    "@type": "Interface",
+    "displayName": "Time series",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:StoringResource;1", "dtmi:digitaltwins:cognite:cdf:RelatedResource;1"],
+    "contents": [
+        {
+            "@type": "Relationship",
+            "name": "contains",
+            "target": "dtmi:digitaltwins:cognite:cdf:Datapoint;1",
+            "writable": true
+        },
+        {
+            "@type": "Property",
+            "name": "latestValue",
+            "schema": "string"
+        },
+        {
+            "@type": "Property",
+            "name": "timestamp",
+            "schema": "dateTime"
+        }
+    ]
+}

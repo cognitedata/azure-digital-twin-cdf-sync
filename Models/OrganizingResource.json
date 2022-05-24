@@ -1,0 +1,8 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:OrganizingResource;1",
+    "@type": "Interface",
+    "displayName": "Organizing Resource",
+    "description": "Resource types to organize data",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:Resource;1"]
+}

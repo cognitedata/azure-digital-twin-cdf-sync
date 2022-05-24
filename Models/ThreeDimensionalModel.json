@@ -1,0 +1,7 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:ThreeDimensionalModel;1",
+    "@type": "Interface",
+    "displayName": "3D Model",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:StoringResource;1", "dtmi:digitaltwins:cognite:cdf:RelatedResource;1"]
+}

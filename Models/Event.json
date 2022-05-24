@@ -1,0 +1,7 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:Event;1",
+    "@type": "Interface",
+    "displayName": "Event",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:StoringResource;1", "dtmi:digitaltwins:cognite:cdf:RelatedResource;1"]
+}

@@ -1,0 +1,37 @@
+{
+    "@context": "dtmi:dtdl:context;2",
+    "@id": "dtmi:digitaltwins:cognite:cdf:Asset;1",
+    "@type": "Interface",
+    "displayName": "Asset",
+    "extends": ["dtmi:digitaltwins:cognite:cdf:StoringResource;1"],
+    "contents": [
+        {
+            "@type": "Relationship",
+            "name": "parent",
+            "maxMultiplicity": 1,
+            "target": "dtmi:digitaltwins:cognite:cdf:Asset;1",
+            "writable": true
+        },
+        {
+            "@type": "Relationship",
+            "name": "contains",
+            "maxMultiplicity": 1,
+            "target": "dtmi:digitaltwins:cognite:cdf:TimeSeries;1",
+            "writable": true
+        },
+        {
+            "@type": "Relationship",
+            "name": "relatesTo",
+            "writable": true,
+            "target": "dtmi:digitaltwins:cognite:cdf:Asset;1",
+            "properties": [
+                {
+                    "@type": "Property",
+                    "name": "labels",
+                    "description": "Multiple labels in CDF relationships are stored as CSV in ADT.",
+                    "schema": "string"
+                }
+            ]
+        }
+    ]
+}
