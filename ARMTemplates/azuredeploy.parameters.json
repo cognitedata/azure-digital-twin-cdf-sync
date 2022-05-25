@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "nameprefix": {
+            "value": "adtcdf"
+        },
+        "skuName": {
+            "value": "standard"
+        },
+        "skuTier": {
+            "value": "Basic"
+        },
+        "skuCapacity": {
+            "value": "1"
+        },
+        "isAutoInflateEnabled": {
+            "value": "false"
+        },
+        "maximumThroughputUnits": {
+            "value": "0"
+        },
+        "zoneRedundant": {
+            "value": true
+        },
+        "tags": {
+            "value": {}
+        },
+        "secretsObject": {
+            "value": {
+                "secrets": [
+                    {
+                        "secretName": "CDF_CLIENT_SECRET",
+                        "secretValue": "asdfsdf"
+                    }
+                ]
+            }
+        }
+    }
+}
