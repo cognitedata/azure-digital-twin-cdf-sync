@@ -12,13 +12,13 @@
             "value": "Basic"
         },
         "skuCapacity": {
-            "value": "1"
+            "value": 1
         },
         "isAutoInflateEnabled": {
-            "value": "false"
+            "value": false
         },
         "maximumThroughputUnits": {
-            "value": "0"
+            "value": 0
         },
         "zoneRedundant": {
             "value": true
@@ -26,15 +26,11 @@
         "tags": {
             "value": {}
         },
-        "secretsObject": {
-            "value": {
-                "secrets": [
-                    {
-                        "secretName": "CDF_CLIENT_SECRET",
-                        "secretValue": "asdfsdf"
-                    }
-                ]
-            }
+        "adtDomainName": {
+            "value": ".api.weu.digitaltwins.azure.net"
+        },
+        "cdfProject": {
+            "value": "cdf-project-name"
         }
     }
 }
