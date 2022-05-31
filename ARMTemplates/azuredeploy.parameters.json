@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "nameprefix": {
-            "value": "adtcdf"
+            "value": "ADTCDF"
         },
         "skuName": {
             "value": "standard"

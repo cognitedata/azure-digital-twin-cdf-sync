@@ -43,13 +43,8 @@ param secretsPermissions array = [
 ])
 param skuName string = 'standard'
 
-@description('Specifies all secrets {"secretName":"","secretValue":""} wrapped in a secure object.')
-@secure()
 // param secretsObject object
 param adtDomainName string
-
-// @description('Client ID of the App Registration that will be used to access Cognite Data Fusion. Store the client secret in the keyvault.')
-// param cdfClientId string
 
 @description('Tenant ID of the App Registration that will be used to access Cognite Data Fusion. Store the client secret in the keyvault.')
 param cdfTenantId string = subscription().tenantId
@@ -70,18 +65,21 @@ param cdfProject string
 @description('Root Asset of ADT resources created in CDF')
 param rootAssetExternalID string = 'adt_root'
 
+var adtName = '${nameprefix}-ADT-${uniqueString(resourceGroup().id)}'
 var functionAppNameCDF2ADT = '${nameprefix}-FunctionCDF2ADT-${uniqueString(resourceGroup().id)}'
 var functionAppNameADT2CDF = '${nameprefix}-FunctionADT2CDF-${uniqueString(resourceGroup().id)}'
 var appRegistrationName = '${nameprefix}-CDFACCESS-${uniqueString(resourceGroup().id)}'
-var hostingPlanName = '${nameprefix}-FunctionApp-${uniqueString(resourceGroup().id)}'
+var hostingPlanNameADT2CDF = '${nameprefix}-FunctionAppADT2CDF-${uniqueString(resourceGroup().id)}'
+var hostingPlanNameCDF2ADT = '${nameprefix}-FunctionAppCDF2ADT-${uniqueString(resourceGroup().id)}'
 var applicationInsightsName = '${nameprefix}-AppInsights-${uniqueString(resourceGroup().id)}'
 var keyVaultName = '${nameprefix}-kv-${uniqueString(resourceGroup().id)}'
-var storageAccountName = '${nameprefix}${uniqueString(resourceGroup().id)}'
+var storageAccountName = toLower('${nameprefix}${uniqueString(resourceGroup().id)}')
 var functionWorkerRuntime = 'python'
 var eventHubName = 'adtsync'
+var eventHubNamespaceName = '${nameprefix}-eventHubName-${uniqueString(resourceGroup().id)}'
 
 resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-06-01-preview' = {
-  name: '${nameprefix}-eventHubName-${uniqueString(resourceGroup().id)}'
+  name: eventHubNamespaceName
   location: location
   tags: tags
   sku: {
@@ -115,14 +113,6 @@ resource authorization_send_listen 'Microsoft.EventHub/namespaces/eventhubs/auth
     ]
   }
 }
-/*
-resource ingest_consumer_group 'Microsoft.EventHub/namespaces/eventhubs/consumergroups@2021-11-01' = [for i in range(0, 1): {
-  parent: eventHub
-  name: '${eventHub.name}-cg-${i}'
-  properties: {}
-}]
-*/
-
 
 param currentTime string = utcNow()
 
@@ -202,10 +192,10 @@ resource script 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
 
 var cdfClientId = script.properties.outputs.clientId
 var clientSecret = script.properties.outputs.clientSecret
-var secretReference =  '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/${appRegistrationName}-SECRET/)'
+var secretReference = '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/${appRegistrationName}-SECRET/)'
 
 resource adt 'Microsoft.DigitalTwins/digitalTwinsInstances@2021-06-30-preview' = {
-  name: '${nameprefix}-ADT-${uniqueString(resourceGroup().id)}'
+  name: adtName
   location: location
   tags: tags
   sku: {
@@ -223,6 +213,63 @@ resource digital_twins_endpoint_event_hub 'Microsoft.DigitalTwins/digitalTwinsIn
   }
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+  name: keyVaultName
+  location: location
+  properties: {
+    enabledForDeployment: enabledForDeployment
+    enabledForTemplateDeployment: enabledForTemplateDeployment
+    enabledForDiskEncryption: enabledForDiskEncryption
+    tenantId: tenantId
+    accessPolicies: [
+      {
+        objectId: functionAppCDF2ADT.identity.principalId
+        tenantId: tenantId
+        permissions: {
+          keys: keysPermissions
+          secrets: secretsPermissions
+        }
+      }
+      {
+        objectId: functionAppADT2CDF.identity.principalId
+        tenantId: tenantId
+        permissions: {
+          keys: keysPermissions
+          secrets: secretsPermissions
+        }
+      }
+    ]
+    sku: {
+      name: skuName
+      family: 'A'
+    }
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
+resource keyVaultName_secretsObject_secrets_secretName 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = {
+  name: '${keyVaultName}/${appRegistrationName}-SECRET'
+  properties: {
+    value: clientSecret
+  }
+  dependsOn: [
+    keyVault
+  ]
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    Request_Source: 'rest'
+  }
+}
+
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   name: storageAccountName
   location: location
@@ -232,14 +279,27 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   kind: 'Storage'
 }
 
-resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
-  name: hostingPlanName
+resource hostingPlanADT2CDF 'Microsoft.Web/serverfarms@2021-03-01' = {
+  name: hostingPlanNameADT2CDF
   location: location
   sku: {
     name: 'Y1'
     tier: 'Dynamic'
   }
-  kind: 'linux'
+  kind: 'functionapp'
+  properties: {
+    reserved: true
+  }
+}
+
+resource hostingPlanCDF2ADT 'Microsoft.Web/serverfarms@2021-03-01' = {
+  name: hostingPlanNameCDF2ADT
+  location: location
+  sku: {
+    name: 'Y1'
+    tier: 'Dynamic'
+  }
+  kind: 'functionapp'
   properties: {
     reserved: true
   }
@@ -248,12 +308,13 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
 resource functionAppCDF2ADT 'Microsoft.Web/sites@2021-03-01' = {
   name: functionAppNameCDF2ADT
   location: location
-  kind: 'functionapp'
+  kind: 'functionapp,linux'
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    serverFarmId: hostingPlan.id
+    serverFarmId: hostingPlanCDF2ADT.id
+    reserved: true
     siteConfig: {
       appSettings: [
         {
@@ -271,10 +332,6 @@ resource functionAppCDF2ADT 'Microsoft.Web/sites@2021-03-01' = {
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~4'
-        }
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~10'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -315,11 +372,11 @@ resource functionAppCDF2ADT 'Microsoft.Web/sites@2021-03-01' = {
       ]
       ftpsState: 'FtpsOnly'
       minTlsVersion: '1.2'
+      linuxFxVersion: 'python|3.9'
     }
     httpsOnly: true
   }
 }
-
 
 resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
   name: functionAppNameADT2CDF
@@ -329,7 +386,7 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    serverFarmId: hostingPlan.id
+    serverFarmId: hostingPlanADT2CDF.id
     siteConfig: {
       appSettings: [
         {
@@ -345,12 +402,12 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
           value: toLower(functionAppNameADT2CDF)
         }
         {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
+          name: 'EVENTHUB_CONNECTION_STRING'
+          value: '${listKeys(authorization_send_listen.id, authorization_send_listen.apiVersion).primaryConnectionString}'
         }
         {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~10'
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -366,7 +423,7 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'CDF_CLIENT_SECRET'
-          value: secretReference'
+          value: secretReference
         }
         {
           name: 'CDF_CLIENTID'
@@ -391,80 +448,35 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
       ]
       ftpsState: 'FtpsOnly'
       minTlsVersion: '1.2'
+      linuxFxVersion: 'python|3.9'
     }
     httpsOnly: true
   }
 }
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: applicationInsightsName
-  location: location
-  kind: 'web'
+resource funcCDF2ADT 'Microsoft.Web/sites/functions@2021-03-01' = {
+  name: 'CDF2ADT'
+  parent: functionAppCDF2ADT
   properties: {
-    Application_Type: 'web'
-    Request_Source: 'rest'
-  }
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
-  name: keyVaultName
-  location: location
-  properties: {
-    enabledForDeployment: enabledForDeployment
-    enabledForTemplateDeployment: enabledForTemplateDeployment
-    enabledForDiskEncryption: enabledForDiskEncryption
-    tenantId: tenantId
-    accessPolicies: [
-      {
-        objectId: functionAppCDF2ADT.identity.principalId
-        tenantId: tenantId
-        permissions: {
-          keys: keysPermissions
-          secrets: secretsPermissions
+    config: {
+      disabled: false
+      bindings: [
+        {
+          type: 'eventHubTrigger'
+          name: eventHubName
+          direction: 'in'
+          eventHubName: eventHubNamespace.name
+          connection: 'EVENTHUB_ACCESS_KEY'
+          cardinality: 'many'
+          consumerGroup: '$Default'
+          dataType: 'binary'
         }
-      }
-      {
-        objectId: functionAppADT2CDF.identity.principalId
-        tenantId: tenantId
-        permissions: {
-          keys: keysPermissions
-          secrets: secretsPermissions
-        }
-      }      
-    ]
-    sku: {
-      name: skuName
-      family: 'A'
+      ]
     }
-    networkAcls: {
-      defaultAction: 'Allow'
-      bypass: 'AzureServices'
+    files: {
+      'ADT2CDFSync/__init__.py': loadTextContent('../Functions/ADT2CDF/ADT2CDFSync/__init__.py')
+      'ADT2CDFSync/handler.py': loadTextContent('../Functions/ADT2CDF/ADT2CDFSync/handler.py')
+      'requirements.txt': loadTextContent('../Functions/ADT2CDF/requirements.txt')
     }
   }
 }
-
-resource keyVaultName_secretsObject_secrets_secretName 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = {
-  name: '${keyVaultName}/${appRegistrationName}-SECRET'
-  properties: {
-    value: clientSecret
-  }
-  dependsOn: [
-    keyVault
-  ]
-}
-
-
-// Deploy function code from zip
-/*
-resource ingestfunction 'Microsoft.Web/sites/extensions@2015-08-01' = {
-  name: '${functionAppCDF2ADT.name}/MSDeploy'
-  properties: {
-packageUri: 'https://github.com/MicrosoftDocs/mslearn-mr-adt-in-unity/raw/main/ARM-Template/functions/zipfiles/blade-functions.zip'
-dbType: 'None'
-    connectionString: ''
-  }
-  dependsOn: [
-    functionAppCDF2ADT
-  ]
-}
-*/
