@@ -69,8 +69,8 @@ var adtName = '${nameprefix}-ADT-${uniqueString(resourceGroup().id)}'
 var functionAppNameCDF2ADT = '${nameprefix}-FunctionCDF2ADT-${uniqueString(resourceGroup().id)}'
 var functionAppNameADT2CDF = '${nameprefix}-FunctionADT2CDF-${uniqueString(resourceGroup().id)}'
 var appRegistrationName = '${nameprefix}-CDFACCESS-${uniqueString(resourceGroup().id)}'
-var hostingPlanNameADT2CDF = '${nameprefix}-FunctionAppADT2CDF-${uniqueString(resourceGroup().id)}'
-var hostingPlanNameCDF2ADT = '${nameprefix}-FunctionAppCDF2ADT-${uniqueString(resourceGroup().id)}'
+var hostingPlanNameADT2CDF = '${nameprefix}-AppServiceADT2CDF-${uniqueString(resourceGroup().id)}'
+var hostingPlanNameCDF2ADT = '${nameprefix}-AppServiceCDF2ADT-${uniqueString(resourceGroup().id)}'
 var applicationInsightsName = '${nameprefix}-AppInsights-${uniqueString(resourceGroup().id)}'
 var keyVaultName = '${nameprefix}-kv-${uniqueString(resourceGroup().id)}'
 var storageAccountName = toLower('${nameprefix}${uniqueString(resourceGroup().id)}')
@@ -378,6 +378,15 @@ resource functionAppCDF2ADT 'Microsoft.Web/sites@2021-03-01' = {
   }
 }
 
+resource DeployCDF2ADT 'Microsoft.Web/sites/extensions@2021-03-01' = {
+  name: 'MSDeploy'
+  kind: 'string'
+  parent: functionAppCDF2ADT
+  properties: {
+    packageUri: 'https://github.com/cognitedata/azure-digital-twin-cdf-sync/releases/download/v0.1.0/CDF2ADTSync.zip'
+  }
+}
+
 resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
   name: functionAppNameADT2CDF
   location: location
@@ -453,7 +462,17 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
     httpsOnly: true
   }
 }
-
+/*
+resource DeployADT2CDF 'Microsoft.Web/sites/extensions@2021-03-01' = {
+  name: 'MSDeploy'
+  kind: 'string'
+  parent: functionAppADT2CDF
+  properties: {
+    packageUri: 'https://github.com/cognitedata/azure-digital-twin-cdf-sync/releases/download/v0.1.0/ADT2CDFSync.zip'
+  }
+}
+*/
+/*
 resource funcCDF2ADT 'Microsoft.Web/sites/functions@2021-03-01' = {
   name: 'CDF2ADT'
   parent: functionAppCDF2ADT
@@ -480,3 +499,4 @@ resource funcCDF2ADT 'Microsoft.Web/sites/functions@2021-03-01' = {
     }
   }
 }
+*/
