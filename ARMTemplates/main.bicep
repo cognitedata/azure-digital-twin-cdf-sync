@@ -133,7 +133,6 @@ resource script 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
       param([string] $resourceName)
       $token = (Get-AzAccessToken -ResourceUrl https://graph.microsoft.com).Token
       $headers = @{'Content-Type' = 'application/json'; 'Authorization' = 'Bearer ' + $token}
-
       $template = @{
         displayName = $resourceName
         requiredResourceAccess = @(
@@ -182,7 +181,6 @@ resource script 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
       $DeploymentScriptOutputs['clientId'] = $app.appId
       $DeploymentScriptOutputs['clientSecret'] = $secret
       $DeploymentScriptOutputs['principalId'] = $principal.id
-
     '''
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
@@ -342,6 +340,10 @@ resource functionAppCDF2ADT 'Microsoft.Web/sites@2021-03-01' = {
           value: functionWorkerRuntime
         }
         {
+          name: 'ENABLE_ORYX_BUILD'
+          value: 'true'
+        }        
+        {
           name: 'ADT_URL'
           value: 'https://${nameprefix}-ADT-${uniqueString(resourceGroup().id)}${adtDomainName}'
         }
@@ -375,15 +377,6 @@ resource functionAppCDF2ADT 'Microsoft.Web/sites@2021-03-01' = {
       linuxFxVersion: 'python|3.9'
     }
     httpsOnly: true
-  }
-}
-
-resource DeployCDF2ADT 'Microsoft.Web/sites/extensions@2021-03-01' = {
-  name: 'MSDeploy'
-  kind: 'string'
-  parent: functionAppCDF2ADT
-  properties: {
-    packageUri: 'https://github.com/cognitedata/azure-digital-twin-cdf-sync/releases/download/v0.1.0/CDF2ADTSync.zip'
   }
 }
 
@@ -427,6 +420,10 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
           value: functionWorkerRuntime
         }
         {
+          name: 'ENABLE_ORYX_BUILD'
+          value: 'true'
+        }        
+        {
           name: 'ADT_URL'
           value: 'https://${nameprefix}-ADT-${uniqueString(resourceGroup().id)}${adtDomainName}'
         }
@@ -462,16 +459,20 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
     httpsOnly: true
   }
 }
-/*
+resource DeployCDF2ADT 'Microsoft.Web/sites/extensions@2021-03-01' = {
+  name: '${functionAppCDF2ADT.name}/zipdeploy'
+  properties: {
+    packageUri: 'https://github.com/cognitedata/azure-digital-twin-cdf-sync/releases/download/v0.1.0/CDF2ADTSync.zip'
+  }
+}
+
 resource DeployADT2CDF 'Microsoft.Web/sites/extensions@2021-03-01' = {
-  name: 'MSDeploy'
-  kind: 'string'
-  parent: functionAppADT2CDF
+  name: '${functionAppADT2CDF.name}/zipdeploy'
   properties: {
     packageUri: 'https://github.com/cognitedata/azure-digital-twin-cdf-sync/releases/download/v0.1.0/ADT2CDFSync.zip'
   }
 }
-*/
+
 /*
 resource funcCDF2ADT 'Microsoft.Web/sites/functions@2021-03-01' = {
   name: 'CDF2ADT'
