@@ -286,8 +286,14 @@ def update_timeseries(cdf_client: CogniteClient, adt_client: DigitalTwinsClient,
                 # get update patches for Timeseries resource
                 update_patches = get_update_patches(t, dt)
                 # check if the latest datapoint has changed and extend update patches list
+                
+                try:
+                    dt_datetime = datetime.strptime(dt['timestamp'], '%Y-%m-%dT%H:%M:%S.%fZ')
+                except:
+                    dt_datetime = datetime.strptime(dt['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+                
                 if (datapoint and (str(datapoint.value) != dt['latestValue'] or \
-                    datapoint.timestamp/1000 > datetime.strptime(dt['timestamp'], '%Y-%m-%dT%H:%M:%S.%fZ').replace(tzinfo=timezone.utc).timestamp())):
+                    datapoint.timestamp/1000 > dt_datetime.replace(tzinfo=timezone.utc).timestamp())):
                     update_patches.append({'op': 'replace', 'path': '/latestValue', 'value': str(datapoint.value)})
                     update_patches.append({'op': 'replace', 'path': '/timestamp', 'value': datetime.fromtimestamp(datapoint.timestamp/1000, tz=timezone.utc)})
                 
