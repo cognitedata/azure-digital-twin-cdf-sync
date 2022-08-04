@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "nameprefix": {
+            "value": "ADTCDF"
+        },
+        "skuName": {
+            "value": "standard"
+        },
+        "skuTier": {
+            "value": "Basic"
+        },
+        "skuCapacity": {
+            "value": 1
+        },
+        "isAutoInflateEnabled": {
+            "value": false
+        },
+        "maximumThroughputUnits": {
+            "value": 0
+        },
+        "zoneRedundant": {
+            "value": true
+        },
+        "tags": {
+            "value": {}
+        },
+        "adtDomainName": {
+            "value": ".api.weu.digitaltwins.azure.net"
+        },
+        "cdfProject": {
+            "value": "cdf-project-name"
+        }
+    }
+}
