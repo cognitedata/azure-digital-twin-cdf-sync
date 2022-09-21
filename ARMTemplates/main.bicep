@@ -66,6 +66,8 @@ param cdfProject string
 param rootAssetExternalID string = 'adt_root'
 
 var adtName = '${nameprefix}-ADT-${uniqueString(resourceGroup().id)}'
+var adtRoute = '${adtName}-route'
+var managedIdentity = '${nameprefix}-managedIdentity-${uniqueString(resourceGroup().id)}'
 var functionAppNameCDF2ADT = '${nameprefix}-FunctionCDF2ADT-${uniqueString(resourceGroup().id)}'
 var functionAppNameADT2CDF = '${nameprefix}-FunctionADT2CDF-${uniqueString(resourceGroup().id)}'
 var appRegistrationName = '${nameprefix}-CDFACCESS-${uniqueString(resourceGroup().id)}'
@@ -77,6 +79,14 @@ var storageAccountName = toLower('${nameprefix}${uniqueString(resourceGroup().id
 var functionWorkerRuntime = 'python'
 var eventHubName = 'adtsync'
 var eventHubNamespaceName = '${nameprefix}-eventHubName-${uniqueString(resourceGroup().id)}'
+
+var ADTroleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'bcd981a7-7f74-457b-83e1-cceb9e632ffe')
+var ADTroleDefinitionName = guid(identity.id, ADTroleDefinitionId, resourceGroup().id)
+var ContributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var ContributorRoleDefinitionName = guid(identity.id, ContributorRoleDefinitionId, resourceGroup().id)
+
+
+
 
 resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-06-01-preview' = {
   name: eventHubNamespaceName
@@ -116,6 +126,32 @@ resource authorization_send_listen 'Microsoft.EventHub/namespaces/eventhubs/auth
 
 param currentTime string = utcNow()
 
+resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+  name: managedIdentity
+  location: location
+}
+
+// add "Digital Twins Data Owner" role to managed identity
+resource adtroledef 'Microsoft.Authorization/roleAssignments@2018-09-01-preview' = {
+  name: ADTroleDefinitionName
+  properties: {
+    roleDefinitionId: ADTroleDefinitionId
+    principalId: reference(managedIdentity).principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// add "Contributor" role to managed identity
+resource contribroledef 'Microsoft.Authorization/roleAssignments@2018-09-01-preview' = {
+  name: ContributorRoleDefinitionName
+  properties: {
+    roleDefinitionId: ContributorRoleDefinitionId
+    principalId: reference(managedIdentity).principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+
 resource script 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
   name: appRegistrationName
   location: location
@@ -123,7 +159,7 @@ resource script 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${resourceId('app-reg-automation', 'Microsoft.ManagedIdentity/userAssignedIdentities', 'AppRegCreator')}': {}
+      '${identity.id}': {}
     }
   }
   properties: {
@@ -208,6 +244,42 @@ resource digital_twins_endpoint_event_hub 'Microsoft.DigitalTwins/digitalTwinsIn
     authenticationType: 'KeyBased'
     connectionStringPrimaryKey: '${listKeys(authorization_send_listen.id, authorization_send_listen.apiVersion).primaryConnectionString}'
     connectionStringSecondaryKey: '${listKeys(authorization_send_listen.id, authorization_send_listen.apiVersion).secondaryConnectionString}'
+  }
+}
+
+resource script_createADTroute 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
+  name: adtRoute
+  location: location
+  kind: 'AzureCLI'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identity.id}': {}
+    }
+  }
+  properties: {
+    azCliVersion: '2.40.0'
+    environmentVariables: [
+      {
+        name: 'adtName'
+        value: adt.name
+      }
+      {
+        name: 'eventHubName'
+        value: eventHub.name
+      }
+      {
+        name: 'resourceGroup'
+        value: resourceGroup().name
+      }      
+    ]
+    scriptContent: '''
+      az config set extension.use_dynamic_install=yes_without_prompt
+      az dt route create -n $adtName --endpoint-name $eventHubName --route-name 'eventhub' -g $resourceGroup --filter "type = 'microsoft.iot.telemetry' OR type = 'Microsoft.DigitalTwins.Twin.Create' OR type = 'Microsoft.DigitalTwins.Twin.Update' OR type = 'Microsoft.DigitalTwins.Twin.Delete' OR type = 'Microsoft.DigitalTwins.Relationship.Create' OR type = 'Microsoft.DigitalTwins.Relationship.Update' OR type = 'Microsoft.DigitalTwins.Relationship.Delete'"
+    '''
+    cleanupPreference: 'OnSuccess'
+    retentionInterval: 'P1D'
+    forceUpdateTag: currentTime
   }
 }
 
