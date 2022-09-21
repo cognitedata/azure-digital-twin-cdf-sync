@@ -13,7 +13,9 @@ import azure.functions as func
 from azure.core.exceptions import ResourceNotFoundError
 from azure.digitaltwins.core import DigitalTwinsClient
 from azure.identity import DefaultAzureCredential
-from cognite.client import CogniteClient
+from cognite.client import CogniteClient, ClientConfig
+from cognite.client.credentials import OAuthClientCredentials
+
 from cognite.client.data_classes import Asset, AssetUpdate, LabelDefinition, Relationship, RelationshipUpdate, TimeSeries, TimeSeriesUpdate
 
 
@@ -847,16 +849,11 @@ def get_cdf_client() -> CogniteClient:
 
     TOKEN_URL = "https://login.microsoftonline.com/%s/oauth2/v2.0/token" % TENANT_ID
 
-    cdf_client = CogniteClient(
-        token_url=TOKEN_URL,
-        token_client_id=CLIENT_ID,
-        token_client_secret=CLIENT_SECRET,
-        token_scopes=SCOPES,
-        project=COGNITE_PROJECT,
-        base_url=f"https://{CDF_CLUSTER}.cognitedata.com",
-        client_name="cdf-optimisation",
-        debug=False,
-    )
+    BASE_URL = f"https://{CDF_CLUSTER}.cognitedata.com"
+
+    creds = OAuthClientCredentials(token_url=TOKEN_URL, client_id=CLIENT_ID, scopes=SCOPES, client_secret=CLIENT_SECRET)
+    cnf = ClientConfig(client_name="cdf-optimisation", project=COGNITE_PROJECT, credentials=creds, base_url=BASE_URL)
+    cdf_client = CogniteClient(cnf)
 
     #print(cdf_client.iam.token.inspect())
     return cdf_client
