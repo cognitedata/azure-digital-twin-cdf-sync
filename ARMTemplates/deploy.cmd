@@ -1,0 +1,1 @@
+az deployment group create --name adt-cdf-sync --resource-group rg-adtcdf --template-file main.bicep --parameters  azuredeploy.parameters.json

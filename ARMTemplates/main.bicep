@@ -63,7 +63,7 @@ param cdfCluster string
 param cdfProject string
 
 @description('Root Asset of ADT resources created in CDF')
-param rootAssetExternalID string = 'adt_root'
+param rootAssetExternalID string
 
 var adtName = '${nameprefix}-ADT-${uniqueString(resourceGroup().id)}'
 var adtRoute = '${adtName}-route'
@@ -82,6 +82,8 @@ var eventHubNamespaceName = '${nameprefix}-eventHubName-${uniqueString(resourceG
 
 var ADTroleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'bcd981a7-7f74-457b-83e1-cceb9e632ffe')
 var ADTroleDefinitionName = guid(identity.id, ADTroleDefinitionId, resourceGroup().id)
+var functionAppCDF2ADTDefinitionName = guid('functionAppCDF2ADT', ADTroleDefinitionId, resourceGroup().id)
+var functionAppADT2CDFDefinitionName = guid('functionAppADT2CDF', ADTroleDefinitionId, resourceGroup().id)
 var ContributorRoleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
 var ContributorRoleDefinitionName = guid(identity.id, ContributorRoleDefinitionId, resourceGroup().id)
 
@@ -159,7 +161,7 @@ resource script 'Microsoft.Resources/deploymentScripts@2019-10-01-preview' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${identity.id}': {}
+        '${resourceId('app-reg-automation', 'Microsoft.ManagedIdentity/userAssignedIdentities', 'AppRegCreator')}': {}
     }
   }
   properties: {
@@ -531,6 +533,31 @@ resource functionAppADT2CDF 'Microsoft.Web/sites@2021-03-01' = {
     httpsOnly: true
   }
 }
+
+
+
+// add "Digital Twins Data Owner" role to function app cdf2adt
+resource adtrolecdf2adt 'Microsoft.Authorization/roleAssignments@2018-09-01-preview' = {
+  name: functionAppCDF2ADTDefinitionName
+  properties: {
+    roleDefinitionId: ADTroleDefinitionId
+    principalId: functionAppCDF2ADT.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+
+// add "Digital Twins Data Owner" role to function app adt2cdf
+resource adtroleadt2cdf 'Microsoft.Authorization/roleAssignments@2018-09-01-preview' = {
+  name: functionAppADT2CDFDefinitionName
+  properties: {
+    roleDefinitionId: ADTroleDefinitionId
+    principalId: functionAppADT2CDF.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+
 resource DeployCDF2ADT 'Microsoft.Web/sites/extensions@2021-03-01' = {
   name: '${functionAppCDF2ADT.name}/zipdeploy'
   properties: {
@@ -546,8 +573,8 @@ resource DeployADT2CDF 'Microsoft.Web/sites/extensions@2021-03-01' = {
 }
 
 /*
-resource funcCDF2ADT 'Microsoft.Web/sites/functions@2021-03-01' = {
-  name: 'CDF2ADT'
+resource funcADT2CDF 'Microsoft.Web/sites/functions@2021-03-01' = {
+  name: 'ADT2CDFSync'
   parent: functionAppCDF2ADT
   properties: {
     config: {
@@ -564,11 +591,6 @@ resource funcCDF2ADT 'Microsoft.Web/sites/functions@2021-03-01' = {
           dataType: 'binary'
         }
       ]
-    }
-    files: {
-      'ADT2CDFSync/__init__.py': loadTextContent('../Functions/ADT2CDF/ADT2CDFSync/__init__.py')
-      'ADT2CDFSync/handler.py': loadTextContent('../Functions/ADT2CDF/ADT2CDFSync/handler.py')
-      'requirements.txt': loadTextContent('../Functions/ADT2CDF/requirements.txt')
     }
   }
 }

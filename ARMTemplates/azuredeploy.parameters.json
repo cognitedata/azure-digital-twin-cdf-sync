@@ -29,8 +29,8 @@
         "adtDomainName": {
             "value": ".api.weu.digitaltwins.azure.net"
         },
-        "cdfProject": {
-            "value": "cdf-project-name"
+        "rootAssetExternalID": {
+            "value": "adt_root"
         }
     }
 }
