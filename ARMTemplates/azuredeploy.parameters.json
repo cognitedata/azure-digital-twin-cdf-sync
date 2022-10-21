@@ -28,9 +28,6 @@
         },
         "adtDomainName": {
             "value": ".api.weu.digitaltwins.azure.net"
-        },
-        "rootAssetExternalID": {
-            "value": "adt_root"
         }
     }
 }

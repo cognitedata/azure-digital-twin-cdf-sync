@@ -56,8 +56,8 @@ def handle(root_ext_id: str) -> None:
         logging.error('Last CDF->ADT synchronization timestamp is defined, but the digital twin in ADT corresponding to the root asset "%s" from CDF does NOT exist!', root_ext_id)
         return
     if not(sync_ts) and (twin_exists):
-        logging.error('Last CDF->ADT synchronization timestamp is NOT defined, but the digital twin in ADT corresponding to the root asset "%s" from CDF does exist!', root_ext_id)
-        return
+        logging.warning('Last CDF->ADT synchronization timestamp is NOT defined, but the digital twin in ADT corresponding to the root asset "%s" from CDF does exist!', root_ext_id)
+        #return
 
     asset_list = cdf_client.assets.retrieve_subtree(external_id=root_ext_id)
     date_now = datetime.utcnow()
@@ -434,9 +434,18 @@ def create_twin(a: Asset, adt_client: DigitalTwinsClient) -> None:
     temp_twin = get_twin_dict(a, ADT_MODEL_IDS.ASSET)
     ext_id = convert_ext_id(a.external_id)
     parent_ext_id = convert_ext_id(a.parent_external_id)
-    adt_client.upsert_digital_twin(ext_id, temp_twin)
-    if (a.parent_external_id):
-        insert_adt_relationship(adt_client, ext_id, parent_ext_id, 'parent')
+    
+    try:
+        adt_client.upsert_digital_twin(ext_id, temp_twin)
+
+        if (a.parent_external_id):
+            insert_adt_relationship(adt_client, ext_id, parent_ext_id, 'parent')
+    
+    except Exception as e:
+        logging.error(f"Failed: {ext_id}")
+        logging.error(e)
+        raise e
+    
     return
 
 
@@ -568,7 +577,7 @@ def convert_ext_id(external_id: str) -> str:
         (not sure if this should be handled at all, could just thow error for the whole conversion)
     '''
     if (external_id):
-        return external_id.replace(':', '*').replace(' ', '_')
+        return external_id.replace(':', '*').replace(' ', '_').replace('&','AND')
     else:
         return external_id
 

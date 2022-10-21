@@ -1,4 +1,13 @@
 {
   "scriptFile": "__init__.py",
-  "bindings": []
+  "bindings": [{
+    "type": "eventHubTrigger",
+    "name": "events",
+    "direction": "in",
+    "eventHubName": "adtsync",    
+    "connection": "EVENTHUB_CONNECTION_STRING",
+    "cardinality": "many",
+    "consumerGroup": "$Default",
+    "dataType": "binary"
+  }]
 }

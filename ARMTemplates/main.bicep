@@ -78,7 +78,7 @@ var keyVaultName = '${nameprefix}-kv-${uniqueString(resourceGroup().id)}'
 var storageAccountName = toLower('${nameprefix}${uniqueString(resourceGroup().id)}')
 var functionWorkerRuntime = 'python'
 var eventHubName = 'adtsync'
-var eventHubNamespaceName = '${nameprefix}-eventHubName-${uniqueString(resourceGroup().id)}'
+var eventHubNamespaceName = '${nameprefix}-eventHub-${uniqueString(resourceGroup().id)}'
 
 var ADTroleDefinitionId = resourceId('Microsoft.Authorization/roleDefinitions', 'bcd981a7-7f74-457b-83e1-cceb9e632ffe')
 var ADTroleDefinitionName = guid(identity.id, ADTroleDefinitionId, resourceGroup().id)
